@@ -1,0 +1,66 @@
+---
+- name: Deploy Nginx
+  hosts: app
+  vars:
+    #nginx_repo: http://nginx.org/packages/centos/{{ ansible_distribution_major_version }}/noarch/RPMS/nginx-release-{{ ansible_distribution | lower }}-{{ ansible_distribution_major_version}}-0.el{{ ansible_distribution_major_version }}.ngx.noarch.rpm
+    #nginx_repo: http://nginx.org/packages/centos/8/x86_64/RPMS/nginx-1.20.1-1.el8.ngx.x86_64.rpm
+    nginx: nginx
+  tasks:
+  - name: Ensure Nginx Release Repo Installed
+    yum: name={{ nginx }}
+    become: yes
+
+  - name: Ensure Nginx Latest Release Installed
+    yum: name=nginx state=latest
+    become: yes  
+
+  - name: Ensure Nginx Service Running and Enabled
+    service: name=nginx state=started enabled=yes
+    become: yes
+
+  - name: Deploy Customized Home Page 
+    copy:
+      src: html/nginx_home.html
+      dest: /usr/share/nginx/html/index.html
+    become: yes
+- name: Nginx Sanity Checks
+  hosts: app 
+
+  tasks:
+  - name: Check port 80 and fail otherwise
+    wait_for:
+      port: 80
+      connect_timeout: 1
+      timeout: 5
+
+  - name: Check nginx configuration is correct
+    command: /usr/sbin/nginx -t
+    register: nginx_validate
+    changed_when: no
+    ignore_errors: yes
+    become: yes
+
+  - name: Nginx Configuration Tests
+    assert:
+      success_msg: nginx configuration tests passed
+      fail_msg: |
+        nginx configuration tests failed
+        {{ nginx_validate.stderr_lines }}
+      that:
+        - "'syntax is ok' in nginx_validate.stderr"
+        - "'test is successful' in nginx_validate.stderr"
+  - name: Check is Nginx Process Running
+    shell: ps -ef | grep -v grep | grep "nginx. master process"
+    changed_when: no
+
+  - name: Capture Server Details
+    uri: url="http://{{ ansible_ssh_host }}"
+    register: url_response
+
+  - name: Nginx Server Tests
+    assert:
+      success_msg: nginx server tests passed
+      fail_msg: nginx server tests failed
+      that:
+        - "url_response.status == 200"
+        - "'nginx' in url_response.server"   

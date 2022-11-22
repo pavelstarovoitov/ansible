@@ -1,0 +1,6 @@
+---
+# vars file for nginx
+
+#nginx_repo: http://nginx.org/packages/centos/{{ ansible_distribution_major_version }}/noarch/RPMS/nginx-release-{{ ansible_distribution | lower }}-{{ ansible_distribution_major_version}}-0.el{{ ansible_distribution_major_version }}.ngx.noarch.rpm
+#nginx_repo: http://nginx.org/packages/centos/8/x86_64/RPMS/nginx-1.20.1-1.el8.ngx.x86_64.rpm
+nginx: nginx

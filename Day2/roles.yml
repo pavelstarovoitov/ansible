@@ -1,0 +1,9 @@
+- name: Install Nginx
+  hosts: app
+  roles:
+    - nginx
+- name: Intall Postgresql
+  hosts: db
+  roles:
+    - postgresql
+  become: yes
